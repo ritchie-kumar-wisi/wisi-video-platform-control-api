@@ -1,0 +1,50 @@
+{
+  "name": "wisi-video-platform-control-api",
+  "displayName": "WISI Video Platform Control API",
+  "description": "To provide a seamless and efficient development experience by allowing users to easily access, manage and integrate various APIs into their projects within the Visual Studio Code editor.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:wisi-video-platform-control-api.testAPI"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "wisi-video-platform-control-api.testAPI",
+        "title": "Test WISI Video Platform Control API"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.1",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/node-fetch": "^2.6.2",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^5.49.0",
+    "@typescript-eslint/parser": "^5.49.0",
+    "@vscode/test-electron": "^2.2.2",
+    "eslint": "^8.33.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.1.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.9",
+    "vidios_iapid_api": "http://nexus.incanetworks.com/artifacts/vidios-iapid_2.5.2/openapi/typescript-fetch/vidios_iapid_api-0.1.0.tgz"
+  }
+}
