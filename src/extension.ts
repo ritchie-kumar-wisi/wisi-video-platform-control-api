@@ -2,14 +2,9 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import fetch, { Headers } from "node-fetch";
-import { Configuration, NetworkInterfacesApi } from 'vidios_iapid_api'
+//import { Configuration, NetworkInterfacesApi } from 'vidios_iapid_api'
 
-async function getQuotes() {
-  const response = await fetch("https://zenquotes.io/api/quotes");
-  const data = await response.json();
-  console.log(data);
-  console.log("Above is the data");
-}
+
 
 // create a function to make a GET request to the API and return the data from http://192.168.137.12/sys/svc/core/api/v1/devices/1/programs/input_1 using the fetch API
 // http://192.168.137.12/sys/svc/core/api/v1/ts/snapshot/in/input_1/pids/49
