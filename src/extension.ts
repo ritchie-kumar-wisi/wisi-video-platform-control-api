@@ -98,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
         matchOnDetail: true,
       });
 
-      if (selection === null) {
+      if (!selection) {
         return;
       }
       // if the user selects the an option with type: GET, all the getPrograms() function
