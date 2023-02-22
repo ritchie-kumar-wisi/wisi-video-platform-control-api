@@ -2,6 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import fetch, { Headers } from "node-fetch";
+import cheerio from 'cheerio';
+
 //import { Configuration, NetworkInterfacesApi } from 'vidios_iapid_api'
 
 
@@ -30,11 +32,24 @@ async function getPrograms() {
   console.log(data);
 }
 
+async function parseWebsite(): Promise<{ title: string, body: string | null, code: string[] }> {
+  const response = await fetch('http://nexus.incanetworks.com/artifacts/vidios-iapid_2.5.2/openapi/html/');
+  const html = await response.text();
+  const $ = cheerio.load(html, { xmlMode: false, decodeEntities: true });
+  const title = $('title').text();
+  const body = $('body').html();
+  const code = $('code').map((i, el) => {
+    return $(el).find('span.pln').map((j, line) => $(line).text()).get();
+  }).get();
+  console.log(code);
+  return { title, body, code };
+}
 
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+  parseWebsite();
   // getPrograms();
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
