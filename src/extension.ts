@@ -7,7 +7,6 @@ import cheerio from 'cheerio';
 //import { Configuration, NetworkInterfacesApi } from 'vidios_iapid_api'
 
 
-
 // create a function to make a GET request to the API and return the data from http://192.168.137.12/sys/svc/core/api/v1/devices/1/programs/input_1 using the fetch API
 // http://192.168.137.12/sys/svc/core/api/v1/ts/snapshot/in/input_1/pids/49
 
@@ -50,6 +49,7 @@ async function parseWebsite(): Promise<{ title: string, body: string | null, cod
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   parseWebsite();
+
   // getPrograms();
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
@@ -106,9 +106,12 @@ export function activate(context: vscode.ExtensionContext) {
   // The commandId parameter must match the command field in package.json
   let disposable = vscode.commands.registerCommand(
     "wisi-video-platform-control-api.testAPI",
-
     // make an async function to show the quick pick menu and select an API from const apis
     async () => {
+      const config = vscode.workspace.getConfiguration();
+      const ip = config.get<string>('chassis.ip');
+      console.log(ip);
+
       const selection = await vscode.window.showQuickPick(apiList, {
         matchOnDetail: true,
       });

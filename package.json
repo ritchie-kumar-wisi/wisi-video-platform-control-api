@@ -14,6 +14,16 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "WISI Video Platform Control API",
+      "properties": {
+        "chassis.ip": {
+          "type": "string",
+          "default": "192.168.129.70",
+          "description": "The chassis IP address"
+        }
+      }
+    },
     "commands": [
       {
         "command": "wisi-video-platform-control-api.testAPI",
