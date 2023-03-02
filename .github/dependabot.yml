@@ -9,3 +9,6 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "node-fetch"
+        # For Express, ignore all updates for node fetch as the extension is not compatible with v3
