@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
-    "node-fetch": "^2.6.9",
+    "node-fetch": "^3.3.0",
     "vidios_iapid_api": "http://nexus.incanetworks.com/artifacts/vidios-iapid_2.5.2/openapi/typescript-fetch/vidios_iapid_api-0.1.0.tgz"
   }
 }
