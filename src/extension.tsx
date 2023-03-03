@@ -2,27 +2,43 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import fetch, { Headers } from "node-fetch";
-import cheerio from 'cheerio';
+import cheerio from "cheerio";
+import React from "react";
+import * as ReactDOMServer from "react-dom/server";
 
 //import { Configuration, NetworkInterfacesApi } from 'vidios_iapid_api'
-
 
 // create a function to make a GET request to the API and return the data from http://192.168.137.12/sys/svc/core/api/v1/devices/1/programs/input_1 using the fetch API
 // http://192.168.137.12/sys/svc/core/api/v1/ts/snapshot/in/input_1/pids/49
 
-async function getPrograms() {
-  let url = 'http://192.168.137.12/sys/svc/core/api/v1/ts/in/input_1/programs.json';
+// Define your modified component
+interface MyWebpageProps {
+  items: string[];
+}
 
-  console.log(Buffer.from('admin:admin').toString('base64'));
+const MyWebpage: React.FunctionComponent<MyWebpageProps> = ({ items }) => {
+  return (
+    <ul>
+      {items.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
+  );
+};
+
+async function getPrograms() {
+  let url =
+    "http://192.168.137.12/sys/svc/core/api/v1/ts/in/input_1/programs.json";
+
+  console.log(Buffer.from("admin:admin").toString("base64"));
 
   const headers = new Headers({
-    'Authorization': 'Basic ' + Buffer.from('admin:admin').toString('base64'),
+    Authorization: "Basic " + Buffer.from("admin:admin").toString("base64"),
   });
 
-
   const response = await fetch(url, {
-    method: 'get',
-    headers: headers
+    method: "get",
+    headers: headers,
   });
 
   //console.log(response);
@@ -31,23 +47,64 @@ async function getPrograms() {
   console.log(data);
 }
 
-async function parseWebsite(): Promise<{ title: string, body: string | null, code: string[] }> {
-  const response = await fetch('http://nexus.incanetworks.com/artifacts/vidios-iapid_2.5.2/openapi/html/');
+async function parseWebsite(): Promise<{
+  title: string;
+  body: string | null;
+  code: string[];
+}> {
+  const response = await fetch(
+    "http://nexus.incanetworks.com/artifacts/vidios-iapid_2.5.2/openapi/html/"
+  );
   const html = await response.text();
   const $ = cheerio.load(html, { xmlMode: false, decodeEntities: true });
-  const title = $('title').text();
-  const body = $('body').html();
-  const code = $('code').map((i, el) => {
-    return $(el).find('span.pln').map((j, line) => $(line).text()).get();
-  }).get();
+  const title = $("title").text();
+  const body = $("body").html();
+  const code = $("code")
+    .map((i, el) => {
+      return $(el)
+        .find("span.pln")
+        .map((j, line) => $(line).text())
+        .get();
+    })
+    .get();
   console.log(code);
   return { title, body, code };
 }
 
-
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+  // Create a new webview panel
+  const panel = vscode.window.createWebviewPanel(
+    "myPanel",
+    "My Panel",
+    vscode.ViewColumn.One,
+    { enableScripts: true }
+  );
+  // Define your array of items
+  const items = ["Item 1", "Item 2", "Item 3"];
+
+  // Render the component with the array of items to an HTML string
+  const html = ReactDOMServer.renderToString(<MyWebpage items={items} />);
+
+  // Set the webview panel's HTML content to the rendered HTML
+  panel.webview.html = `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: https:; script-src 'unsafe-eval' vscode-resource:;">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>My Panel</title>
+    </head>
+    <body>
+      <div id="root">${html}</div>
+      <script>
+        // Optional: add any custom scripts you need here
+      </script>
+    </body>
+  </html>
+`;
   parseWebsite();
 
   // getPrograms();
@@ -70,23 +127,29 @@ export function activate(context: vscode.ExtensionContext) {
 
   const apis: ApiDictionary = {
     get: {
-      endpoint: "http://192.168.137.12/sys/svc/core/api/v1/ts/in/input_1/programs.json",
+      endpoint:
+        "http://192.168.137.12/sys/svc/core/api/v1/ts/in/input_1/programs.json",
       description: "Endpoint for retrieving user data. (call getPrograms())",
       type: "GET",
     },
     put: {
-      endpoint: "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
+      endpoint:
+        "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
       description: "Provides URI for updating user data.",
       type: "PUT",
     },
     post: {
-      endpoint: "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
-      description: "Provides URI for creating new configuration data within in the chassis.",
+      endpoint:
+        "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
+      description:
+        "Provides URI for creating new configuration data within in the chassis.",
       type: "POST",
     },
     delete: {
-      endpoint: "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
-      description: "Provides URI for deleting configuration data within in the chassis",
+      endpoint:
+        "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
+      description:
+        "Provides URI for deleting configuration data within in the chassis",
       type: "DELETE",
     },
   };
@@ -99,8 +162,6 @@ export function activate(context: vscode.ExtensionContext) {
     };
   });
 
-
-
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
@@ -109,7 +170,7 @@ export function activate(context: vscode.ExtensionContext) {
     // make an async function to show the quick pick menu and select an API from const apis
     async () => {
       const config = vscode.workspace.getConfiguration();
-      const ip = config.get<string>('chassis.ip');
+      const ip = config.get<string>("chassis.ip");
       console.log(ip);
 
       const selection = await vscode.window.showQuickPick(apiList, {
@@ -122,8 +183,7 @@ export function activate(context: vscode.ExtensionContext) {
       // if the user selects the an option with type: GET, all the getPrograms() function
       else if (apis[selection.label].type === "GET") {
         getPrograms();
-      }
-      else {
+      } else {
         const newSelection = await vscode.window.showQuickPick(apiList, {
           matchOnDetail: true,
         });
@@ -142,4 +202,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() { }
+export function deactivate() {}
