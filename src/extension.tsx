@@ -12,11 +12,13 @@ import * as ReactDOMServer from "react-dom/server";
 // http://192.168.137.12/sys/svc/core/api/v1/ts/snapshot/in/input_1/pids/49
 
 // Define your modified component
-interface MyWebpageProps {
+interface API_DiagnosticsProps {
   items: string[];
 }
 
-const MyWebpage: React.FunctionComponent<MyWebpageProps> = ({ items }) => {
+const API_Diagnostics: React.FunctionComponent<API_DiagnosticsProps> = ({
+  items,
+}) => {
   return (
     <ul>
       {items.map((item) => (
@@ -76,8 +78,8 @@ async function parseWebsite(): Promise<{
 export function activate(context: vscode.ExtensionContext) {
   // Create a new webview panel
   const panel = vscode.window.createWebviewPanel(
-    "myPanel",
-    "My Panel",
+    "extension.api",
+    "WISI Video Platform Control API",
     vscode.ViewColumn.One,
     { enableScripts: true }
   );
@@ -85,7 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
   const items = ["Item 1", "Item 2", "Item 3"];
 
   // Render the component with the array of items to an HTML string
-  const html = ReactDOMServer.renderToString(<MyWebpage items={items} />);
+  const html = ReactDOMServer.renderToString(<API_Diagnostics items={items} />);
 
   // Set the webview panel's HTML content to the rendered HTML
   panel.webview.html = `
