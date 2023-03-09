@@ -68,21 +68,24 @@ function addEndpoint(method: keyof ApiDictionary, endpoint: Endpoint) {
 
 const headers = new Headers({
   Authorization: "Basic " + Buffer.from("admin:admin").toString("base64"),
+  "Content-Type": "application/json",
 });
 
 const baseURL = "http://" + ip;
 
 
 
-const getInputNames = async (): Promise<{ inputNames: string[]; row_ids: number[]; }> => {
+const getInputNames = async (): Promise<{ inputNames: string[]; row_ids: number[]; stream_ids: string[] }> => {
   let { data, status_code } = await getInputSources();
   let inputNames = [];
   let row_ids = [];
+  let stream_ids = [];
   for (let input of data) {
     inputNames.push(input.values[10][0].dn); // specific to this API call
     row_ids.push(input.row_id);
+    stream_ids.push(input.name);
   }
-  return { inputNames, row_ids };
+  return { inputNames, row_ids, stream_ids };
 };
 
 
@@ -181,7 +184,7 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage('WISI Video Platform Control API Extension Activated');
 
   let inputs = await getInputSources();
-  let { inputNames, row_ids } = await getInputNames();
+  //let { inputNames, row_ids } = await getInputNames();
   let { data, status_code } = await getPrograms();
   //console.log(data);
   //console.log(inputNames, row_ids);
@@ -200,7 +203,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   // Define an array of items to display in the webview
-  let items = ['Item 1', 'Item 2', 'Item 3'];
+  let items = ['WISI Video Platform Control API Extension Activated'];
 
   // Generate the HTML content for the webview
   function generateHtml() {
@@ -240,7 +243,7 @@ export async function activate(context: vscode.ExtensionContext) {
     async () => {
       /// clear the const apis variable
       /// input sources
-      let { inputNames, row_ids } = await getInputNames();
+      let { inputNames, row_ids, stream_ids } = await getInputNames();
       let n = inputNames.length;
       for (let i = 0; i < n; i++) {
         let endpoint = {
@@ -265,8 +268,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
         // The endpoint was not found in the dictionary
         addEndpoint("get", endpoint);
-        addEndpoint("put", endpoint);
         addEndpoint("delete", endpoint);
+
+        // Add the put endpoint, make a deep copy of the endpoint object
+        const putEndpoint = JSON.parse(JSON.stringify(endpoint));
+        putEndpoint.endpoint = baseURL + "/sys/svc/core/api/v1/dvp/streams/ip/sources/" + stream_ids[i];
+        addEndpoint("put", putEndpoint);
       }
 
 
@@ -334,7 +341,7 @@ export async function activate(context: vscode.ExtensionContext) {
         // make an input box for the user to enter the body of the request
         // load up the current json from the endpoint and display it in the input box
         let { data, status_code } = await getRequest(selectedEndpoint);
-        let placeHolder_payload = JSON.stringify(data);
+        let placeHolder_payload = await JSON.stringify(data);
         let body = await vscode.window.showInputBox({
           prompt: "Enter the body for the PUT request",
           placeHolder: "Enter the body for the PUT request",
@@ -343,12 +350,28 @@ export async function activate(context: vscode.ExtensionContext) {
 
         // convert the body to a json object
         if (!body) { return; }
-        let payload = await JSON.parse(body);
-        console.log(payload);
+        let payload = JSON.parse(body);
+        console.log(payload, status_code);
+        console.log(selectedEndpoint);
 
         // make the put request
-        let { data: put_data, status_code: put_status_code } = await putRequest(selectedEndpoint, payload);
-        console.log(put_data, put_status_code);
+        let test = await fetch(selectedEndpoint, {
+          "headers": {
+            "accept": "application/javascript, application/json",
+            "accept-language": "en-US,en;q=0.9",
+            "authorization": "Basic YWRtaW46YWRtaW4=",
+            "content-type": "application/json",
+            "x-requested-with": "XMLHttpRequest",
+            "Referer": "http://192.168.137.12/controlpanel?deviceid=1",
+            "Referrer-Policy": "strict-origin-when-cross-origin"
+          },
+          "body": "{\"lid\":1,\"id\":\"cg37baj7nsislqeqefjg\",\"group\":\"0\",\"networkID\":[2],\"enabled\":true,\"sourceType\":\"UDP\",\"dn\":\"Guido test\",\"udp\":{\"ipAddress\":\"239.222.111.43\",\"ipPort\":1234},\"streams\":[],\"ip_iface\":[null]}",
+          "method": "PUT"
+        });
+        let resp = await test.json();
+        console.log(resp);
+        //let { data: put_data, status_code: put_status_code } = await putRequest(selectedEndpoint, payload);
+        //console.log(put_data, put_status_code);
 
 
         /*
