@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import fetch, { Headers } from "node-fetch";
+import fetch, { Body, Headers, Response } from "node-fetch";
 import cheerio from "cheerio";
 import React from "react";
 import * as ReactDOMServer from "react-dom/server";
@@ -25,28 +25,45 @@ const headers = new Headers({
 
 let baseURL = "http://" + ip;
 
-const getInputSources = async () => {
+
+
+const getInputNames = async (): Promise<{ inputNames: string[]; row_ids: number[]; }> => {
+  let { data, status_code } = await getInputSources();
+  let inputNames = [];
+  let row_ids = [];
+  for (let input of data) {
+    inputNames.push(input.values[10][0].dn);
+    row_ids.push(input.row_id);
+  }
+  return { inputNames, row_ids };
+};
+
+
+
+const getInputSources = async (): Promise<{ data: any; status_code: number; }> => {
   let url = baseURL + "/sys/svc/core/api/v1/devices/1/services/urn:incanetworks-com:serviceId:VideoRelay/tables/source_streams/store";
   const response = await fetch(url, {
     method: "get",
     headers: headers,
   });
+
   const data = await response.json();
-  return data;
+  return { data, status_code: response.status };
 }
 
-// parse 
 
-const getPrograms = async () => {
+const getPrograms = async (): Promise<{ data: any; status_code: number; }> => {
   let url = baseURL + "/sys/svc/core/api/v1/ts/in/input_1/programs.json";
 
   const response = await fetch(url, {
     method: "get",
     headers: headers,
   });
+  let status_code = response.status;
 
   const data = await response.json();
-  return data;
+  // print the data type of the data variable
+  return { data, status_code };
 }
 
 
@@ -74,7 +91,7 @@ async function parseWebsite(): Promise<{
   return { title, body, code };
 }
 
-function displayResponse(response: any, channel: vscode.OutputChannel) {
+function displayResponse(response: Object, channel: vscode.OutputChannel) {
   const responseString = JSON.stringify(response, null, 2);
   const responseLines = responseString.split('\n');
   responseLines.forEach(line => channel.appendLine(line));
@@ -84,11 +101,15 @@ function displayResponse(response: any, channel: vscode.OutputChannel) {
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
   const channel = vscode.window.createOutputChannel('WISI Output Channel');
-  channel.appendLine('WISI Video Platform Control API Extension Activated');
   channel.show();
-
+  channel.appendLine('WISI Video Platform Control API Extension Activated');
+  vscode.window.showInformationMessage('WISI Video Platform Control API Extension Activated');
 
   let inputs = await getInputSources();
+  let { inputNames, row_ids } = await getInputNames();
+  let { data, status_code } = await getPrograms();
+  console.log(data);
+  console.log(inputNames, row_ids);
   displayResponse(inputs, channel);
   // display the inputs in a list view to the channel
   // display every part of the object in the list view
@@ -133,13 +154,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   parseWebsite();
 
-  // getPrograms();
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-
-  console.log(
-    'Congratulations, your extension "wisi-video-platform-control-api" is now active!'
-  );
 
   // create a dictionary with api endpoints and their corresponding functions
   type ApiDictionary = {
