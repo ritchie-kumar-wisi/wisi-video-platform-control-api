@@ -1,3 +1,7 @@
+// Author
+// Copyright
+// License
+
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
@@ -165,7 +169,7 @@ async function parseWebsite(): Promise<{
         .get();
     })
     .get();
-  //console.log(code);
+  console.log(code);
   return { title, body, code };
 }
 
@@ -370,6 +374,7 @@ export async function activate(context: vscode.ExtensionContext) {
         });
         let resp = await test.json();
         console.log(resp);
+        // add to webview panel
         //let { data: put_data, status_code: put_status_code } = await putRequest(selectedEndpoint, payload);
         //console.log(put_data, put_status_code);
 
