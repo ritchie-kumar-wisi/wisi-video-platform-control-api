@@ -14,16 +14,63 @@ console.log(ip);
 // create a function to make a GET request to the API and return the data from http://192.168.137.12/sys/svc/core/api/v1/devices/1/programs/input_1 using the fetch API
 // http://192.168.137.12/sys/svc/core/api/v1/ts/snapshot/in/input_1/pids/49
 
-// Define your modified component
-interface API_DiagnosticsProps {
-  items: string[];
+interface Endpoint {
+  endpoint: string;
+  label: string;
+  description: string;
 }
+
+interface ApiDictionary {
+  get: {
+    endpoints: Endpoint[];
+  };
+  put: {
+    endpoints: Endpoint[];
+  };
+  post: {
+    endpoints: Endpoint[];
+  };
+  delete: {
+    endpoints: Endpoint[];
+  };
+}
+
+const apis: ApiDictionary = {
+  get: {
+    endpoints: [
+      // Add additional endpoints as needed
+    ],
+  },
+  put: {
+    endpoints: [
+      // Add additional endpoints as needed
+    ],
+  },
+  post: {
+    endpoints: [
+      // Add additional endpoints as needed
+    ],
+  },
+  delete: {
+    endpoints: [
+      // Add additional endpoints as needed
+    ],
+  },
+};
+
+function addEndpoint(method: keyof ApiDictionary, endpoint: Endpoint) {
+  apis[method].endpoints.push(endpoint);
+}
+
+
+
+
 
 const headers = new Headers({
   Authorization: "Basic " + Buffer.from("admin:admin").toString("base64"),
 });
 
-let baseURL = "http://" + ip;
+const baseURL = "http://" + ip;
 
 
 
@@ -32,7 +79,7 @@ const getInputNames = async (): Promise<{ inputNames: string[]; row_ids: number[
   let inputNames = [];
   let row_ids = [];
   for (let input of data) {
-    inputNames.push(input.values[10][0].dn);
+    inputNames.push(input.values[10][0].dn); // specific to this API call
     row_ids.push(input.row_id);
   }
   return { inputNames, row_ids };
@@ -62,9 +109,37 @@ const getPrograms = async (): Promise<{ data: any; status_code: number; }> => {
   let status_code = response.status;
 
   const data = await response.json();
-  // print the data type of the data variable
   return { data, status_code };
 }
+
+const getRequest = async (endpoint: string): Promise<{ data: any; status_code: number; }> => {
+  let url = endpoint;
+
+  const response = await fetch(url, {
+    method: "get",
+    headers: headers,
+  });
+  let status_code = response.status;
+
+  const data = await response.json();
+  return { data, status_code };
+}
+
+const putRequest = async (endpoint: string, body: any): Promise<{ data: any; status_code: number; }> => {
+  let url = endpoint;
+
+  const response = await fetch(url, {
+    method: "put",
+    headers: headers,
+    body: body
+  });
+
+  let status_code = response.status;
+
+  const data = await response.json();
+  return { data, status_code };
+}
+
 
 
 async function parseWebsite(): Promise<{
@@ -87,7 +162,7 @@ async function parseWebsite(): Promise<{
         .get();
     })
     .get();
-  console.log(code);
+  //console.log(code);
   return { title, body, code };
 }
 
@@ -108,8 +183,8 @@ export async function activate(context: vscode.ExtensionContext) {
   let inputs = await getInputSources();
   let { inputNames, row_ids } = await getInputNames();
   let { data, status_code } = await getPrograms();
-  console.log(data);
-  console.log(inputNames, row_ids);
+  //console.log(data);
+  //console.log(inputNames, row_ids);
   displayResponse(inputs, channel);
   // display the inputs in a list view to the channel
   // display every part of the object in the list view
@@ -140,98 +215,156 @@ export async function activate(context: vscode.ExtensionContext) {
   panel.webview.html = generateHtml();
 
   // Define a command to update the webview content
-  const updateCommand = vscode.commands.registerCommand('extension.updateListView', () => {
+  const add_item_to_list = vscode.commands.registerCommand('extension.updateListView', (item: string) => {
     // Update the items array
-    items.push('New Item');
+    items.push(item);
 
     // Update the HTML content of the webview panel
     panel.webview.html = generateHtml();
   });
 
 
-  context.subscriptions.push(updateCommand);
+  context.subscriptions.push(add_item_to_list);
 
 
   parseWebsite();
 
 
-  // create a dictionary with api endpoints and their corresponding functions
-  type ApiDictionary = {
-    [key: string]: {
-      endpoint: string;
-      description: string;
-      type?: string;
-      payload?: any;
-    };
-  };
 
-  const apis: ApiDictionary = {
-    get: {
-      endpoint:
-        "http://192.168.137.12/sys/svc/core/api/v1/ts/in/input_1/programs.json",
-      description: "Endpoint for retrieving user data. (call getPrograms())",
-      type: "GET",
-    },
-    put: {
-      endpoint:
-        "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
-      description: "Provides URI for updating user data.",
-      type: "PUT",
-    },
-    post: {
-      endpoint:
-        "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
-      description:
-        "Provides URI for creating new configuration data within in the chassis.",
-      type: "POST",
-    },
-    delete: {
-      endpoint:
-        "http://192.168.137.12/sys/svc/core/api/v1/dvp/streams/ip/sources/cfmu5tj7nsis0n51siu0",
-      description:
-        "Provides URI for deleting configuration data within in the chassis",
-      type: "DELETE",
-    },
-  };
-
-  // map apis to return a label and detail property for each api
-  const apiList = Object.keys(apis).map((api) => {
-    return {
-      label: api,
-      detail: apis[api].description,
-    };
-  });
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
   let disposable1 = vscode.commands.registerCommand(
     "wisi-video-platform-control-api.testAPI",
-    // make an async function to show the quick pick menu and select an API from const apis
     async () => {
-      const selection = await vscode.window.showQuickPick(apiList, {
+      /// clear the const apis variable
+      /// input sources
+      let { inputNames, row_ids } = await getInputNames();
+      let n = inputNames.length;
+      for (let i = 0; i < n; i++) {
+        let endpoint = {
+          label: inputNames[i],
+          description: "Request the input source: " + inputNames[i],
+          endpoint: baseURL + "/sys/svc/core/api/v1/devices/1/services/urn:incanetworks-com:serviceId:VideoRelay/tables/source_streams/store/" + row_ids[i],
+        }
+
+        let exists = false;
+        // Search through each endpoint in the dictionary and skip if it exists
+        for (const method of Object.keys(apis)) {
+          const endpoints = apis[method as keyof ApiDictionary]["endpoints"];
+          for (const endpointObj of endpoints) {
+            if (endpointObj.endpoint === endpoint.endpoint) {
+              exists = true;
+              break;
+            }
+          }
+        }
+
+        if (exists) continue;
+
+        // The endpoint was not found in the dictionary
+        addEndpoint("get", endpoint);
+        addEndpoint("put", endpoint);
+        addEndpoint("delete", endpoint);
+      }
+
+
+      interface HttpMethodDictionary {
+        [key: string]: { detail: string };
+      }
+
+      // Define the HTTP methods dictionary
+      const http_methods: HttpMethodDictionary = {
+        'get': {
+          detail: 'Retrieves data from the WISI Video Platform Control API',
+        },
+        'put': {
+          detail: 'Updates data in the WISI Video Platform Control API',
+        },
+        'post': {
+          detail: 'Creates a new resource in the WISI Video Platform Control API',
+        },
+        'delete': {
+          detail: 'Deletes a resource from the WISI Video Platform Control API',
+        },
+      };
+
+      // Create an array of QuickPickItems that match on detail
+      const httpMethodList = Object.keys(http_methods).map((method) => ({
+        label: method.toUpperCase(),
+        detail: http_methods[method].detail,
+      }));
+
+      // make a quick pick for the user to select get, put, post, delete
+      const selection = await vscode.window.showQuickPick(httpMethodList, {
+        placeHolder: "Select an HTTP method",
         matchOnDetail: true,
       });
 
       if (!selection) {
         return;
       }
-      // if the user selects the an option with type: GET, all the getPrograms() function
-      else if (apis[selection.label].type === "GET") {
-        getPrograms();
-      } else {
-        const newSelection = await vscode.window.showQuickPick(apiList, {
+
+      // get the selected method
+      const method = selection.label.toLowerCase();
+      if (method === "put") {
+        // get a quick pick of the 'put' endpoints from the apis dictionary
+        const putMethodList = apis.put.endpoints.map((endpoint, index) => ({
+          endpoint: endpoint.endpoint,
+          label: endpoint.label,
+          description: endpoint.description,
+        }));
+
+
+
+        // make a quick pick for the user to select get, put, post, delete
+        const selection = await vscode.window.showQuickPick(putMethodList, {
+          placeHolder: "Select an endpoint to PUT to",
           matchOnDetail: true,
         });
+
+        if (!selection) {
+          return;
+        }
+
+        console.log(apis);
+        let selectedEndpoint = selection.endpoint;
+
+        // make an input box for the user to enter the body of the request
+        // load up the current json from the endpoint and display it in the input box
+        let { data, status_code } = await getRequest(selectedEndpoint);
+        let placeHolder_payload = JSON.stringify(data);
+        let body = await vscode.window.showInputBox({
+          prompt: "Enter the body for the PUT request",
+          placeHolder: "Enter the body for the PUT request",
+          value: placeHolder_payload,
+        });
+
+        // convert the body to a json object
+        if (!body) { return; }
+        let payload = await JSON.parse(body);
+        console.log(payload);
+
+        // make the put request
+        let { data: put_data, status_code: put_status_code } = await putRequest(selectedEndpoint, payload);
+        console.log(put_data, put_status_code);
+
+
+        /*
+        let body = await vscode.window.showInputBox({
+          prompt: "Enter the body for the PUT request",
+          placeHolder: "Enter the body for the PUT request",
+          value: "api"
+        });
+        */
       }
-    },
-    () => {
-      // The code you place here will be executed every time your command is executed
-      // Display a message box to the user
-      vscode.window.showInformationMessage(
-        "Hello World from WISI Video Platform Control API!"
-      );
+
+
+
+
     }
+
   );
 
   let disposable2 = vscode.commands.registerCommand(
