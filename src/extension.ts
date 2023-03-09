@@ -19,26 +19,36 @@ interface API_DiagnosticsProps {
   items: string[];
 }
 
-async function getPrograms() {
-  let url =
-    "http://192.168.137.12/sys/svc/core/api/v1/ts/in/input_1/programs.json";
+const headers = new Headers({
+  Authorization: "Basic " + Buffer.from("admin:admin").toString("base64"),
+});
 
-  console.log(Buffer.from("admin:admin").toString("base64"));
+let baseURL = "http://" + ip;
 
-  const headers = new Headers({
-    Authorization: "Basic " + Buffer.from("admin:admin").toString("base64"),
+const getInputSources = async () => {
+  let url = baseURL + "/sys/svc/core/api/v1/devices/1/services/urn:incanetworks-com:serviceId:VideoRelay/tables/source_streams/store";
+  const response = await fetch(url, {
+    method: "get",
+    headers: headers,
   });
+  const data = await response.json();
+  return data;
+}
+
+// parse 
+
+const getPrograms = async () => {
+  let url = baseURL + "/sys/svc/core/api/v1/ts/in/input_1/programs.json";
 
   const response = await fetch(url, {
     method: "get",
     headers: headers,
   });
 
-  //console.log(response);
-
   const data = await response.json();
-  console.log(data);
+  return data;
 }
+
 
 async function parseWebsite(): Promise<{
   title: string;
@@ -64,18 +74,61 @@ async function parseWebsite(): Promise<{
   return { title, body, code };
 }
 
+function displayResponse(response: any, channel: vscode.OutputChannel) {
+  const responseString = JSON.stringify(response, null, 2);
+  const responseLines = responseString.split('\n');
+  responseLines.forEach(line => channel.appendLine(line));
+}
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-  // Create a new webview panel
+export async function activate(context: vscode.ExtensionContext) {
+  const channel = vscode.window.createOutputChannel('WISI Output Channel');
+  channel.appendLine('WISI Video Platform Control API Extension Activated');
+  channel.show();
+
+
+  let inputs = await getInputSources();
+  displayResponse(inputs, channel);
+  // display the inputs in a list view to the channel
+  // display every part of the object in the list view
+
+
+
+  // Create the webview panel
   const panel = vscode.window.createWebviewPanel(
-    "extension.api",
-    "WISI Video Platform Control API",
+    'listView',
+    'List View',
     vscode.ViewColumn.One,
-    { enableScripts: true }
+    {}
   );
-  // Define your array of items
-  const items = ["Item 1", "Item 2", "Item 3"];
+
+  // Define an array of items to display in the webview
+  let items = ['Item 1', 'Item 2', 'Item 3'];
+
+  // Generate the HTML content for the webview
+  function generateHtml() {
+    return `
+      <ul>
+        ${items.map(item => `<li>${item}</li>`).join('')}
+      </ul>
+    `;
+  }
+
+  // Set the initial HTML content for the webview panel
+  panel.webview.html = generateHtml();
+
+  // Define a command to update the webview content
+  const updateCommand = vscode.commands.registerCommand('extension.updateListView', () => {
+    // Update the items array
+    items.push('New Item');
+
+    // Update the HTML content of the webview panel
+    panel.webview.html = generateHtml();
+  });
+
+
+  context.subscriptions.push(updateCommand);
 
 
   parseWebsite();
@@ -138,7 +191,7 @@ export function activate(context: vscode.ExtensionContext) {
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  let disposable = vscode.commands.registerCommand(
+  let disposable1 = vscode.commands.registerCommand(
     "wisi-video-platform-control-api.testAPI",
     // make an async function to show the quick pick menu and select an API from const apis
     async () => {
@@ -175,9 +228,9 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable1);
   context.subscriptions.push(disposable2);
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
