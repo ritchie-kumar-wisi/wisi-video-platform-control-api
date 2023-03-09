@@ -7,6 +7,7 @@ import React from "react";
 import * as ReactDOMServer from "react-dom/server";
 
 //import { Configuration, NetworkInterfacesApi } from 'vidios_iapid_api'
+// TEST
 const config = vscode.workspace.getConfiguration();
 const ip = config.get<string>("chassis.ip");
 console.log(ip);
