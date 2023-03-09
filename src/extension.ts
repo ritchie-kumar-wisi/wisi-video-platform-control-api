@@ -7,7 +7,6 @@ import React from "react";
 import * as ReactDOMServer from "react-dom/server";
 
 //import { Configuration, NetworkInterfacesApi } from 'vidios_iapid_api'
-// TEST
 const config = vscode.workspace.getConfiguration();
 const ip = config.get<string>("chassis.ip");
 console.log(ip);
@@ -19,18 +18,6 @@ console.log(ip);
 interface API_DiagnosticsProps {
   items: string[];
 }
-
-const API_Diagnostics: React.FunctionComponent<API_DiagnosticsProps> = ({
-  items,
-}) => {
-  return (
-    <ul>
-      {items.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
-  );
-};
 
 async function getPrograms() {
   let url =
@@ -90,27 +77,6 @@ export function activate(context: vscode.ExtensionContext) {
   // Define your array of items
   const items = ["Item 1", "Item 2", "Item 3"];
 
-  // Render the component with the array of items to an HTML string
-  const html = ReactDOMServer.renderToString(<API_Diagnostics items={items} />);
-
-  // Set the webview panel's HTML content to the rendered HTML
-  panel.webview.html = `
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: https:; script-src 'unsafe-eval' vscode-resource:;">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>My Panel</title>
-    </head>
-    <body>
-      <div id="root">${html}</div>
-      <script>
-        // Optional: add any custom scripts you need here
-      </script>
-    </body>
-  </html>
-`;
 
   parseWebsite();
 
