@@ -7,6 +7,9 @@ import React from "react";
 import * as ReactDOMServer from "react-dom/server";
 
 //import { Configuration, NetworkInterfacesApi } from 'vidios_iapid_api'
+const config = vscode.workspace.getConfiguration();
+const ip = config.get<string>("chassis.ip");
+console.log(ip);
 
 // create a function to make a GET request to the API and return the data from http://192.168.137.12/sys/svc/core/api/v1/devices/1/programs/input_1 using the fetch API
 // http://192.168.137.12/sys/svc/core/api/v1/ts/snapshot/in/input_1/pids/49
@@ -107,6 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
     </body>
   </html>
 `;
+
   parseWebsite();
 
   // getPrograms();
@@ -171,10 +175,6 @@ export function activate(context: vscode.ExtensionContext) {
     "wisi-video-platform-control-api.testAPI",
     // make an async function to show the quick pick menu and select an API from const apis
     async () => {
-      const config = vscode.workspace.getConfiguration();
-      const ip = config.get<string>("chassis.ip");
-      console.log(ip);
-
       const selection = await vscode.window.showQuickPick(apiList, {
         matchOnDetail: true,
       });
@@ -200,7 +200,16 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  let disposable2 = vscode.commands.registerCommand(
+    "wisi-video-platform-control-api.getChassisInfo",
+    () => {
+      // Open the chassis web page externally URI
+      vscode.env.openExternal(vscode.Uri.parse("http://admin:admin@" + ip));
+    }
+  );
+
   context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable2);
 }
 
 // This method is called when your extension is deactivated

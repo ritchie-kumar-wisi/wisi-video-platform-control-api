@@ -28,6 +28,10 @@
       {
         "command": "wisi-video-platform-control-api.testAPI",
         "title": "Test WISI Video Platform Control API"
+      },
+      {
+        "command": "wisi-video-platform-control-api.getChassisInfo",
+        "title": "Open chassis webpage"
       }
     ]
   },
